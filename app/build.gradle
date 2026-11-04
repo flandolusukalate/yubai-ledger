@@ -1,0 +1,14 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'cn.yubai.ledger'
+    compileSdk 36
+    buildFeatures { buildConfig true }
+    defaultConfig { applicationId 'cn.yubai.ledger'; minSdk 26; targetSdk 36; versionCode 33; versionName '0.2.31'; testInstrumentationRunner providers.gradleProperty('ledgerTestRunner').getOrElse('cn.yubai.ledger.VerificationRunner') }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildTypes { release { minifyEnabled false } }
+}
+dependencies {
+    implementation 'androidx.activity:activity:1.10.1'
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'com.google.mlkit:text-recognition-chinese:16.0.1'
+}

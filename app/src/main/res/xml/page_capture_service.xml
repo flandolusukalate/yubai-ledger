@@ -1,0 +1,9 @@
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/page_capture_description"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:packageNames="com.tencent.mm,com.eg.android.AlipayGphone"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="500"
+    android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
+    android:isAccessibilityTool="false" />

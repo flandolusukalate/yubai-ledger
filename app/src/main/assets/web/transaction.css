@@ -1,0 +1,78 @@
+/* The sheet surface itself participates in the Overture spring, in both themes. */
+body.sheet-open{overflow:hidden}
+.shell{transform-origin:50% 20%}
+#sheet-shade{position:fixed;inset:0;z-index:6;pointer-events:none;background:rgb(33 26 22 / .36);backdrop-filter:blur(3px)}
+#sheet-shade[hidden]{display:none}
+#sheet::backdrop{background:transparent;backdrop-filter:none}
+#sheet [hidden]{display:none!important}
+#sheet[data-kind=transaction]{width:min(560px,calc(100vw - 40px));padding:0;max-height:90dvh;border:1px solid var(--line);box-shadow:0 24px 80px #211a1630}
+#sheet[data-kind=transaction] #sheet-content{padding:24px 28px 0}
+#sheet[data-kind=transaction] .dialog-head{margin-bottom:16px;border:0;padding:0}
+#sheet[data-kind=transaction] .dialog-head h2{font-size:20px}
+#sheet[data-kind=transaction] .dialog-head button{border:1px solid var(--line);font-size:23px;min-width:40px;min-height:40px}
+#sheet[data-kind=transaction] .dialog-head:before{content:'Y.';font:italic 32px/1 var(--font-display);color:var(--red)}
+#sheet[data-kind=transaction] .dialog-head h2{flex:1}
+.type-field>span{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+.type-options{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px}
+.choice-option{border:0;background:transparent;padding:10px 14px;min-height:44px;font-size:12px;color:var(--muted)}
+.choice-option[aria-pressed=true]{background:var(--ink);color:var(--page)}
+.type-options .choice-option{padding:8px 12px;min-height:38px}
+.transaction-amount{padding:24px 0 20px;border-bottom:1px solid var(--line)}
+.transaction-amount .field>span{font-size:11px;letter-spacing:.1em;margin-bottom:4px}
+.amount-line{display:flex;align-items:baseline;gap:12px}
+.amount-line .currency{font-size:22px}
+#sheet .amount-line input{padding:0;border:0!important;background:transparent!important;font:400 72px/1.15 var(--font-display);letter-spacing:-.04em;min-height:90px;border-radius:0;box-shadow:none;outline-offset:3px;min-width:0}
+#sheet .amount-line input::placeholder{color:var(--line);opacity:1}
+.transaction-fields{gap:16px;margin-top:16px}
+.merchant-field,.category-field,.date-field{grid-column:1/-1}
+#sheet .merchant-field{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px}
+#sheet .merchant-field>span{flex-shrink:0;margin:0}
+#sheet .merchant-field input{border:0;background:transparent;padding:8px 0;min-height:40px;font-size:14px}
+.category-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.category-choice{border:1px solid transparent;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-height:70px;min-width:0;overflow-wrap:anywhere;padding:8px 4px;background:transparent;color:var(--muted);font-size:11px}
+.category-create{margin-top:12px;font-size:12px}.category-create summary{cursor:pointer;color:var(--red);min-height:44px;display:flex;align-items:center}.category-create input{width:100%;margin:8px 0}.category-create .muted{margin:8px 0}
+.category-choice svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.4}
+.category-choice[aria-pressed=true]{border-color:var(--red);background:#a02b1d09;color:var(--red)}
+.choice-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);background:transparent;padding:11px 12px;min-height:46px;font-size:13px;text-align:left}
+.choice-value{overflow-wrap:anywhere}.choice-chevron{color:var(--muted)}
+.choice-trigger[aria-expanded=true]{border-color:var(--ov-focus)}
+.choice-options{border:1px solid var(--line);padding:6px;margin-top:8px;background:var(--ov-surface);display:flex;flex-direction:column;max-height:210px;overflow:auto}
+.choice-options .choice-option{text-align:left;overflow-wrap:anywhere}
+.date-field{position:relative}
+.date-field>span{display:none}
+.date-field>.choice-trigger{border:0;padding:8px 0;justify-content:flex-start;font-size:12px;color:var(--muted)}
+.date-field>.choice-trigger:before{content:'交易日期';margin-right:auto}
+.transaction-calendar{padding:16px;border:1px solid var(--line);margin:8px 0;background:var(--ov-surface)}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calendar-head strong{font-size:13px;font-weight:500}
+.calendar-step{min-width:44px;min-height:44px;border:0;background:transparent;font-size:24px}
+.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.calendar-days .weekday{font-size:11px;color:var(--muted);padding-bottom:6px}
+.calendar-day{min-width:0;min-height:40px;border:0;background:transparent;font-size:12px;padding:4px}
+.calendar-day[aria-pressed=true]{background:var(--red);color:var(--page)}
+.transaction-advanced{border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.transaction-advanced summary{padding:16px 0;cursor:pointer;min-height:48px;list-style:none}
+.transaction-advanced summary:after{content:'＋';float:right}.transaction-advanced[open] summary:after{content:'−'}
+.advanced-body{display:grid;gap:16px;padding:0 0 20px}
+#sheet[data-kind=transaction] .form-actions{position:sticky;bottom:0;margin:0 -28px;padding:16px 28px 24px;background:var(--page);border-top:1px solid var(--line);z-index:2;flex-wrap:nowrap}
+#sheet[data-kind=transaction] .form-actions .btn{min-height:50px}
+#sheet[data-kind=transaction] .form-actions .btn:first-child{flex:0 0 72px;border-color:transparent}
+#form-error:not(:empty){background:#a02b1d09;border-left:2px solid var(--red);padding:12px;color:var(--red);font-size:12px;margin:12px 0}
+[data-appearance=lens] #sheet[data-kind=transaction]{border-radius:28px;background:linear-gradient(145deg,#f8f2e8,var(--page) 55%);box-shadow:inset 0 1px 1px #fff9,0 24px 80px #211a1630}
+[data-appearance=lens] #sheet[data-kind=transaction] .dialog-head button,[data-appearance=lens] .choice-option,[data-appearance=lens] .category-choice,[data-appearance=lens] .choice-trigger,[data-appearance=lens] .calendar-day{border-radius:14px}
+[data-appearance=lens] .choice-options,[data-appearance=lens] .transaction-calendar{border-radius:18px}
+[data-appearance=lens] .category-choice[aria-pressed=true]{box-shadow:inset 0 1px 0 #fff8}
+@media(max-width:760px){
+ #sheet-shade{backdrop-filter:none}
+ #sheet[data-kind=transaction]{width:100%;max-width:100%;margin:auto 0 0;max-height:94dvh;border-bottom:0}
+ #sheet[data-kind=transaction] #sheet-content{padding:12px 20px 0}
+ #sheet[data-kind=transaction] #sheet-content:before{content:'';display:block;width:32px;height:3px;background:var(--line);margin:0 auto 16px}
+ #sheet[data-kind=transaction] .dialog-head{margin-bottom:12px}
+ .type-options{gap:2px;padding-bottom:10px}.type-options .choice-option{font-size:11px;padding:8px 10px}
+ .transaction-amount{padding:18px 0 12px}#sheet .amount-line input{font-size:64px;min-height:78px}
+ .transaction-fields{gap:12px}.category-choice{min-height:64px}
+ #sheet[data-kind=transaction] .form-actions{margin:0 -20px;padding:12px 20px max(20px,env(safe-area-inset-bottom))}
+ [data-appearance=lens] #sheet[data-kind=transaction]{border-radius:28px 28px 0 0}
+}
+@media(max-width:360px){.transaction-fields{grid-template-columns:1fr 1fr}.transaction-fields .compact-choice{grid-column:auto}.type-options .choice-option{padding:8px}.calendar-days{gap:0}.transaction-calendar{padding:10px}.calendar-day{min-height:38px}}
+@media(prefers-reduced-motion:reduce){body.sheet-open .shell{transform:none}#sheet{will-change:auto}}
