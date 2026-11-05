@@ -60,6 +60,10 @@ public final class MainActivity extends androidx.activity.ComponentActivity {
         web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(false);
         web.getSettings().setAllowFileAccess(false);web.getSettings().setAllowContentAccess(false);
         web.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        // Every page is a bundled asset: never serve a cached ui.mjs/css from the previous install.
+        web.getSettings().setCacheMode(android.webkit.WebSettings.LOAD_NO_CACHE);
+        try{long stamp=getPackageManager().getPackageInfo(getPackageName(),0).lastUpdateTime;android.content.SharedPreferences prefs=getSharedPreferences("yubai-web",MODE_PRIVATE);
+            if(prefs.getLong("assetsStamp",0)!=stamp){web.clearCache(true);prefs.edit().putLong("assetsStamp",stamp).apply();}}catch(Exception ignored){}
         WebViewAssetLoader loader=new WebViewAssetLoader.Builder().addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
         web.setWebViewClient(new WebViewClient(){
             @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){
