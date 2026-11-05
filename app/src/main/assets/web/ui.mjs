@@ -74,6 +74,7 @@ function pendingEntry(c){
  return `<article class="pending-box"><div class="section-head"><div class="entry-main"><h3 class="textwrap">${esc(title)}</h3>${hasPurpose?`<div class="entry-meta">${c.merchantEdited?'用途已填写 · 待核对类型':'商户已填入用途 · 待确认分类'}</div>`:''}</div><strong class="entry-value">${c.amount?amount(c.amount):'金额待核实'}</strong></div><div class="muted">${esc(sourceName(c.source,c))} · ${esc(C.dayAt(c.occurredAt,state.settings.timezone))}<br>${esc(c.reason)}${hold?'<br>'+esc(hold):''}</div><div class="actions">${recorded?button(hasPurpose?(c.merchantEdited?'查看用途':'确认分类'):'补用途','payment-purpose',true,`data-id="${esc(c.id)}"`):c.fundsStatus==='paid_out'&&c.status==='pending'?button('用途是消费','transfer-expense',true,`data-id="${esc(c.id)}"`):''}${recorded&&!c.holdReleased&&!c.suspectedId&&!c.suspectedCandidateId?button('非日常消费','release-payment-hold',false,`data-id="${esc(c.id)}"`):''}${!recorded&&c.status==='pending'?button(c.fundsStatus==='paid_out'?'核对其他用途':'核对入账','confirm',c.fundsStatus!=='paid_out',`data-id="${esc(c.id)}"`):c.status==='rejected'?'<span class="tag warn">失败 / 取消，不入账</span>':''}${c.suspectedId&&c.status==='pending'?button('关联为同一笔','merge',false,`data-id="${esc(c.id)}" data-tx="${esc(c.suspectedId)}"`):''}${button(c.suspectedId||c.suspectedCandidateId?'忽略重复记录':'忽略此候选','dismiss',false,`data-id="${esc(c.id)}"`)}</div></article>`;
 }
 function home(){
+  if(appearanceOf(state.settings.theme)==='glass')return homeGlass();
   const p=state.plans[month],s=C.summary(state,month,today),pending=s.pending.length,goal=p?.goalTarget??p?.savings??0;
   const available=s.availableToday??s.left,num=available===null?'—':compact(available),parts=num.split('.');
   const awaiting=!!p&&p.income>0&&(s.receivedPlan||0)<p.income&&month===today.slice(0,7),owed=awaiting?p.income-(s.receivedPlan||0):0;
@@ -86,6 +87,59 @@ function home(){
     (p&&C.unassigned(state,month)<0?`<div class="notice">计划资金缺口 ${amount(-C.unassigned(state,month))}。可减少娱乐、延期活动或调整储蓄；必要生活底线不会自动降低。</div>`:'')+
     (state.closures[month]?.needsReview?'<div class="notice">月结后流水有变动，请在统计中重新核对月结。</div>':'')+
     `<div class="dashboard-grid"><div><section class="panel"><div class="section-head"><h2>让每份预算，各得其所</h2><button class="text-btn" data-action="${p?'adjust':'plan'}">${p?'调整预算':'开始分配'} ↗</button></div>${p?s.budgets.map(budgetRow).join(''):empty('预算还在等你的安排','餐饮、交通、娱乐，也为想去的地方留一份。','plan','创建月计划')}</section><section class="panel"><div class="section-head"><h2>最近的日常</h2><button class="text-btn" data-action="nav" data-page="ledger">全部账单 ↗</button></div>${transactions().slice(0,4).map(entry).join('')||empty('每一笔生活，都值得被记录','从今天的一顿饭、一杯咖啡开始。','new','记下第一笔')}</section></div><div><section class="savings-card"><div class="section-head"><h2>给未来的自己</h2><button class="text-btn" data-action="goal">储蓄目标 ↗</button></div><div class="amount">${amount(goal)}</div><div class="caption"><span>本月实际净结余</span><span>${amount(s.net)}</span></div><div class="bar"><i style="width:${goal?Math.min(100,Math.max(0,s.net/goal*100)):0}%"></i></div><p class="muted" style="margin-top:16px">预算预留 ${amount(s.savingsReserved)}<br>转入储蓄账户净额 ${amount(s.savingsTransferred)}<br>${p?.goalDeadline?'目标截止 '+esc(p.goalDeadline):'目标、预留、转存与净结余分别记录。'}</p><button class="text-btn" data-action="transfer">转入储蓄账户 ↗</button></section><section class="panel" style="margin-top:28px"><div class="section-head"><h2>值得期待的事</h2><button class="text-btn" data-action="nav" data-page="activities">生活安排 ↗</button></div>${state.activities.filter(a=>a.month===month&&a.status!=='cancelled').slice(0,2).map(a=>`<div class="entry"><div class="activity-date">${Number(a.date.slice(8))}</div><div class="entry-main"><div>${esc(a.name)}</div><div class="entry-meta">${esc(a.destination||a.date)} · 预留剩余 ${amount(C.budget(state,month,a.budgetId).remaining)}</div></div></div>`).join('')||'<p class="intro-copy">一场电影，一次短途旅行。<br>提前留出预算，让期待安心发生。</p>'}</section><div class="quote">“生活不必精打细算到每一秒，<br>但可以留一些从容给明天。”<small>A LITTLE ROOM FOR WHAT MATTERS.</small></div></div></div>`;
+}
+// 日光 / 夜灯: one hero per screen, a 30-frame month film, and a floating record button.
+const CN_MONTH=['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+const pad2=n=>String(n).padStart(2,'0');
+function money3(n,cls=''){const [i,d]=compact(Math.abs(n)).split('.');return `<span class="g-money ${cls}${i.length>3?' is-long':''}"><small>¥</small>${i}<span class="g-dec">.${d}</span></span>`;}
+function clock(t){const tz=state.settings.timezone,day=C.dayAt(t.occurredAt,tz);if(day!==today)return `${day.slice(5,7)}.${day.slice(8)}`;try{return new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(t.occurredAt));}catch{return day.slice(5);}}
+function monthFilm(s){
+  const days=C.daysInMonth(month),daily=new Set(s.budgets.filter(b=>b.daily).map(b=>b.id)),spent=Array(days).fill(0);
+  for(const t of transactions())if(t.status==='confirmed'&&t.type==='expense'){const d=Number(C.dayAt(t.occurredAt,state.settings.timezone).slice(8));spent[d-1]+=(t.splits||[]).filter(x=>daily.has(x.budgetId)).reduce((n,x)=>n+x.amount,0);}
+  const ref=Math.max(1,s.budgets.filter(b=>b.daily).reduce((n,b)=>n+b.allocated+b.shifts,0)/days),now=today.slice(0,7);
+  const cur=month===now?Number(today.slice(8)):month<now?days+1:0;
+  let over=0;const bars=spent.map((v,i)=>{const d=i+1,h=v?Math.round(Math.min(44,8+v/ref*30)):3;
+    if(d>cur)return `<i class="future" style="--n:${i}"></i>`;
+    if(d===cur)return `<i class="today" style="height:${Math.max(8,h)}px;--n:${i}"></i>`;
+    if(v>ref){over++;return `<i class="over" style="height:${h}px;--n:${i}"></i>`;}
+    return `<i style="height:${h}px;--n:${i}"></i>`;}).join('');
+  const past=Math.min(days,Math.max(0,cur-1)),label=`本月每日日常花费：已过 ${past} 天${over?`，其中 ${over} 天超出平均参考额度`:''}${cur>=1&&cur<=days?`，今天是第 ${cur} 天`:''}`;
+  return `<section class="g-film" aria-label="这个月的每一天"><div class="g-row g-caption"><span>这个月 · 每一天</span><span>${month.slice(5)}.01 — ${month.slice(5)}.${days}</span></div><div class="g-film-strip" role="img" aria-label="${label}" style="--days:${days}">${bars}</div><div class="g-row g-ticks" aria-hidden="true"><span>1</span><span>15</span><span>${days}</span></div></section>`;
+}
+function homeGlass(){
+  const p=state.plans[month],s=C.summary(state,month,today),pending=s.pending.length,goal=p?.goalTarget??p?.savings??0;
+  const awaiting=!!p&&p.income>0&&(s.receivedPlan||0)<p.income&&month===today.slice(0,7),owed=awaiting?p.income-(s.receivedPlan||0):0;
+  const available=p&&s.N?(s.availableToday??s.left):null,over=available!==null&&available<0,dim=C.daysInMonth(month);
+  const status=!p?'':awaiting?'生活费待到账':p.income>0?'生活费已到账':'';
+  const eyebrow=!p?`${monthName()} · 还没有计划`:s.N?`第 ${pad2(Number(today.slice(8)))} 天 · 共 ${dim} 天`:`${monthName()} · ${month<today.slice(0,7)?'已经过去':'还没开始'}`;
+  let hero;
+  if(!p)hero=`<div class="g-lead">这个月，从一份计划开始</div><div class="g-money g-empty" aria-hidden="true">— —</div><p class="g-sub">给吃饭、出行和想做的事各留一份，余白会每天告诉你还能花多少。</p>${button('制定本月计划 ↗','plan',true,'data-g-plan')}`;
+  else if(available===null){const spent=s.expenses-s.refunds;hero=`<div class="g-lead">这个月一共花了</div>${money3(spent)}<p class="g-sub">收入 ${amount(s.income)} <i aria-hidden="true">·</i> 净结余 ${amount(s.net)}</p>`;}
+  else hero=`<div class="g-lead">${over?'今天超出参考额度':s.pendingPaymentTotal?'今天还能花 · 已含预扣':'今天还能花'}</div>${money3(available,over?'is-over':'')}<p class="g-sub">今天已花 ${amount(s.T)} <i aria-hidden="true">·</i> 参考额度 ${amount(s.availableTotal??s.total??0)}</p>${over?'<p class="g-note">没关系，明天的参考额度会相应调低一点。</p>':''}`;
+  const dailyCount=s.budgets.filter(b=>b.daily).length;
+  const vSplit=n=>{const [i,d]=compact(n).split('.');return `¥${i}<small>.${d}</small>`;};
+  const second=awaiting&&s.plannedForecast<0
+    ?`<div class="g-cell"><span class="g-k">月底资金</span><b data-forecast="home-plan" class="g-v awaiting-figure" aria-label="暂不测算">— —</b><span class="g-k">生活费到账后再测算</span></div>`
+    :goal?`<button type="button" class="g-cell" data-action="transfer"><span class="g-k">给未来的自己</span><b class="g-v gold">${vSplit(goal)}</b><span class="g-k">${p.goalDeadline?esc(p.goalDeadline.slice(5))+' 截止 · ':''}转入 →</span></button>`
+    :`<button type="button" class="g-cell" data-action="goal"><span class="g-k">给未来的自己</span><b class="g-v gold">— —</b><span class="g-k">设一个储蓄目标 →</span></button>`;
+  const recent=transactions().filter(t=>t.status!=='void').slice(0,3);
+  const line=t=>{const income=['income','refund'].includes(t.type);return `<button type="button" class="g-line" data-action="detail" data-id="${esc(t.id)}"><span class="g-time">${clock(t)}</span><span class="g-what">${esc(t.merchant||C.TYPES[t.type])}</span><span class="g-amt ${income?'positive':''}">${t.type==='transfer'?'↔':income?'+':'−'}${compact(t.amount)}</span></button>`;};
+  const acts=state.activities.filter(a=>a.month===month&&a.status!=='cancelled').slice(0,2);
+  return `<div class="g-home${over?' is-over':''}">`+
+    (loadError?'<div class="notice">本地账本读取失败。已停止写入，请到设置恢复备份；原文件没有被覆盖。</div>':'')+
+    (awaiting?`<div class="arrival" data-arrival><div><strong>生活费 ${amount(owed)} 还没到账</strong><span class="muted">到账前，先不计算月底结余。</span></div><button class="btn" data-action="plan">标记到账</button></div>`:'')+
+    `<section class="g-hero" aria-label="今日额度"><div class="g-row"><span class="g-eyebrow">${eyebrow}</span>${status?`<span class="g-status">${status}</span>`:''}</div>${hero}</section>`+
+    `<button type="button" class="g-cta" data-action="new"><span aria-hidden="true">＋</span> 记下这一笔</button>`+
+    (p?monthFilm(s):'')+
+    (p?`<div class="g-pair"><button type="button" class="g-cell" data-action="jump" data-target="home-budgets"><span class="g-k">日常预算剩余</span><b class="g-v ${s.D<0?'negative':''}">${vSplit(s.D)}</b><span class="g-k">${dailyCount} 项 · 查看 →</span></button>${second}</div>`:'')+
+    (s.pendingPaymentTotal?`<div class="notice" data-payment-hold><strong>待补用途 ${amount(s.pendingPaymentTotal)}</strong><br>${s.heldPayments} 笔付款已自动记下，按日常消费预扣，补充后校正。其中今日付款 ${amount(s.dailyHold)}。<button class="text-btn" data-action="pending">去补用途 ↗</button></div>`:'')+
+    (pending?`<div class="strip"><div><span class="tag warn">${pending} 笔待确认</span> <span class="muted">核对后才会计入收支与预算。</span></div><button class="text-btn" data-action="pending">去核对 ↗</button></div>`:'')+
+    (p&&C.unassigned(state,month)<0?`<div class="notice">计划资金缺口 ${amount(-C.unassigned(state,month))}。可减少娱乐、延期活动或调整储蓄；必要生活底线不会自动降低。</div>`:'')+
+    (state.closures[month]?.needsReview?'<div class="notice">月结后流水有变动，请在统计中重新核对月结。</div>':'')+
+    `<section class="g-list" aria-label="最近的日常"><div class="g-row g-caption"><span>最近的日常</span><button type="button" class="text-btn" data-action="nav" data-page="ledger">全部账单 →</button></div>${recent.map(line).join('')||`<p class="g-quiet">还没有记录。从今天的一顿饭、一杯咖啡开始。</p>`}</section>`+
+    (p?`<section class="g-list" id="home-budgets" aria-label="每份预算"><div class="g-row g-caption"><span>每份预算</span><button type="button" class="text-btn" data-action="adjust">调整预算 →</button></div>${s.budgets.map(budgetRow).join('')}</section>`:'')+
+    (acts.length?`<section class="g-list" aria-label="值得期待的事"><div class="g-row g-caption"><span>值得期待的事</span><button type="button" class="text-btn" data-action="nav" data-page="activities">生活安排 →</button></div>${acts.map(a=>`<div class="g-line is-static"><span class="g-time">${esc(a.date.slice(5).replace('-','.'))}</span><span class="g-what">${esc(a.name)}</span><span class="g-amt">${compact(C.budget(state,month,a.budgetId).remaining)}</span></div>`).join('')}</section>`:'')+
+    `</div>`;
 }
 function ledger(){
  const list=transactions().filter(t=>!query||[t.merchant,C.TYPES[t.type],...(t.splits||[]).map(x=>C.categories(state)[x.category])].join(' ').includes(query));
@@ -132,7 +186,7 @@ function render(){
   Motion.beforeRender();
   native?.backEnabled?.($('#sheet').open||page!=='home');
   today=C.dayAt(new Date(),state.settings.timezone);document.documentElement.dataset.theme=state.settings.theme==='stage'?'stage':'paper';document.querySelector('meta[name=theme-color]')?.setAttribute('content',state.settings.theme==='stage'?'#0c0a09':'#eee8dc');nav();
-  $('#main').innerHTML=`<header class="topbar"><div class="wordmark"><em>Y.</em><div><span>余白</span><small>ROOM FOR LIFE</small></div></div><div class="month-control"><label class="month-picker"><span>${Number(month.slice(0,4))} 年 ${Number(month.slice(5))} 月</span><span aria-hidden="true">⌄</span><input id="month" type="month" value="${month}" aria-label="选择账本月份"></label>${page!=='settings'?`<button class="icon-button" aria-label="选择外观主题" data-action="appearance">${icon('settings')}</button>`:''}</div></header>`+
+  $('#main').innerHTML=`<header class="topbar"><div class="wordmark"><em>Y.</em><div><span>余白</span><small>ROOM FOR LIFE</small></div></div><div class="month-control"><label class="month-picker"><span>${appearanceOf(state.settings.theme)==='glass'?(month.slice(0,4)===today.slice(0,4)?'':Number(month.slice(0,4))+' · ')+CN_MONTH[Number(month.slice(5))-1]+'月':`${Number(month.slice(0,4))} 年 ${Number(month.slice(5))} 月`}</span><span aria-hidden="true">⌄</span><input id="month" type="month" value="${month}" aria-label="选择账本月份"></label>${page!=='settings'?`<button class="icon-button" aria-label="选择外观主题" data-action="appearance">${icon('settings')}</button>`:''}</div></header>`+
     ({home,ledger,activities,stats,settings}[page]||home)()+`<footer class="footer-note"><span>好好生活，留一点余白。</span><span>LOCAL FIRST · CNY</span></footer>`;
   $('#month').onchange=e=>{if(/^\d{4}-\d{2}$/.test(e.target.value)){month=e.target.value;render();}};
   if(appearanceOf(state.settings.theme)==='glass')mountGlassMonth($('.month-picker'),{value:month,today,onPick:v=>{month=v;render();}});
@@ -140,6 +194,8 @@ function render(){
   $$('[data-setting-source]').forEach(el=>el.onchange=()=>guarded(()=>{const selected=new Set(state.settings.sources);el.checked?selected.add(el.dataset.settingSource):selected.delete(el.dataset.settingSource);commit('SETTINGS',{sources:[...selected]});}));
   if($('#auto-record-payments'))$('#auto-record-payments').onchange=e=>guarded(()=>commit('SETTINGS',{autoRecordPayments:e.target.checked}));
   Motion.afterRender({page,month,appearance:appearanceOf(state.settings.theme)});
+  document.documentElement.toggleAttribute('data-over',!!$('.g-home.is-over'));
+  const bar=$('#mobile-nav');if(bar?.offsetHeight)document.documentElement.style.setProperty('--nav-h',bar.offsetHeight+'px');
 }
 let transactionEditor=null,ruleEditor=null;
 function sheet(title,body,onSubmit,{kind='default'}={}){
@@ -215,7 +271,7 @@ function previewBackup(text){restorePreview=C.restore(text);if(restorePreview.se
  });}
 function drain(process=true){if(!native)return;try{const known=new Set(state.candidates.map(c=>c.id));collector=JSON.parse(native.status());reloadStored();const queue=JSON.parse(native.queue());if(queue.length)commit('INGEST',queue,undefined,queue.map(c=>c.queueId));else render();if(process)native.processQueue?.();if(state.candidates.some(c=>c.autoRecorded&&!known.has(c.id)))toast('付款已自动记录，今日可用额度已更新；用途可以稍后补充');}catch(e){toast('处理采集队列失败，候选仍保留：'+e.message);}}
 window.nativeEvent=(type,payload)=>guarded(()=>{if(ruleEditor?.event(type,payload))return;if(type==='resume')drain();else if(type==='ledger-updated')drain(false);else if(type==='ocr-start')toast('正在本地识别中文截图…');else if(type==='ocr'){const c=C.parsePayment(payload.text,{source:'ocr'});if(!payload.text.trim())throw new Error('图片中没有识别到文字，请换一张清晰截图');commit('INGEST',c,{auto:false});page='ledger';ledgerTab='pending';render();toast('截图已识别，请核对实际金额与交易状态');}else if(type==='csv')previewCSV(payload.text);else if(type==='backup')previewBackup(payload.text);else if(type==='error')toast(payload.message);else if(type==='saved')toast('文件已保存');});
-action('nav',el=>{page=el.dataset.page;render();window.scrollTo(0,0);});action('close-sheet',()=>window.closeSheet());action('new',()=>txSheet());action('income',()=>txSheet({type:'income'}));action('transfer',()=>txSheet({type:'transfer'}));action('plan',planSheet);action('adjust',adjust);action('activity',activitySheet);action('detail',el=>details(el.dataset.id));action('edit-tx',el=>txSheet({tx:state.transactions.find(x=>x.id===el.dataset.id)}));action('void-tx',el=>{commit('VOID',el.dataset.id);window.closeSheet();toast('流水状态已更新，统计同步重算');});action('pending',()=>{page='ledger';ledgerTab='pending';render();});action('tab',el=>{ledgerTab=el.dataset.tab;render();});action('confirm',el=>reviewCandidate(state.candidates.find(x=>x.id===el.dataset.id)));
+action('jump',el=>{const t=document.getElementById(el.dataset.target);t?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});});action('nav',el=>{page=el.dataset.page;render();window.scrollTo(0,0);});action('close-sheet',()=>window.closeSheet());action('new',()=>txSheet());action('income',()=>txSheet({type:'income'}));action('transfer',()=>txSheet({type:'transfer'}));action('plan',planSheet);action('adjust',adjust);action('activity',activitySheet);action('detail',el=>details(el.dataset.id));action('edit-tx',el=>txSheet({tx:state.transactions.find(x=>x.id===el.dataset.id)}));action('void-tx',el=>{commit('VOID',el.dataset.id);window.closeSheet();toast('流水状态已更新，统计同步重算');});action('pending',()=>{page='ledger';ledgerTab='pending';render();});action('tab',el=>{ledgerTab=el.dataset.tab;render();});action('confirm',el=>reviewCandidate(state.candidates.find(x=>x.id===el.dataset.id)));
 action('merge',el=>{sheet('确认是同一笔交易',`<p class="muted">只有确认这条候选与下方已记流水是同一次资金变动，才应关联。相同金额也可能是不同交易。</p>${entry(state.transactions.find(x=>x.id===el.dataset.tx))}${submit('关联，不新增收支')}`,()=>{commit('MERGE',{id:el.dataset.id,transactionId:el.dataset.tx});window.closeSheet();});});
 action('dismiss',el=>{commit('DISMISS',el.dataset.id);toast('已忽略，不产生收支');});action('activity-spend',el=>txSheet({budgetId:el.dataset.budget}));action('cancel-activity',el=>{sheet('取消活动',`<p class="muted">释放未使用预留到待分配资金；已支付消费仍保留，退款到账后另记关联退款。</p>${submit('取消活动并释放剩余')}`,()=>{commit('CANCEL_ACTIVITY',el.dataset.id);window.closeSheet();});});
 action('carry-activity',el=>sheet('保留到下个月',`<p class="muted">将这项活动尚未使用的预留带到目标月，不算收入，也不会再次分给日常预算。先创建目标月计划。</p>${field('目标月份','month','','month','required')}${submit('保留资金')}`,f=>{commit('CARRY_ACTIVITY',{id:el.dataset.id,toMonth:f.month});window.closeSheet();}));

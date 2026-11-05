@@ -66,7 +66,7 @@ export function afterRender({page,month,appearance}){
   moveIndicator(document.getElementById('desktop-links'),'desktop');moveIndicator(document.getElementById('mobile-nav'),'mobile');
   mountThemeGlass();
   if(changed&&!reduce()){
-    const nodes=[...document.querySelectorAll('.page-heading,.hero,.panel,.summary-grid,.savings-card,.activity,.empty')].filter((e,i,a)=>!a.some(p=>p!==e&&p.contains(e))).slice(0,8);
+    const nodes=[...document.querySelectorAll('.page-heading,.hero,.panel,.summary-grid,.savings-card,.activity,.empty,.g-hero,.g-film,.g-pair,.g-list')].filter((e,i,a)=>!a.some(p=>p!==e&&p.contains(e))).slice(0,8);
     if(theme==='glass')nodes.forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(14px) scale(.985)',filter:'blur(6px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:540,delay:i*45,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
     else nodes.forEach((el,i)=>O?.motion?.develop(el,{duration:420,delay:i*35,from:'gray'}));
     document.querySelectorAll('.bar i').forEach(el=>{
@@ -138,7 +138,7 @@ export function sheetClosed(){
 }
 function press(el,target,keyboard=false){
   if(!el||el.disabled||el.closest('[aria-disabled="true"]')||(el.dataset.lgDrag&&!keyboard)||reduce())return;
-  const liquid=theme==='glass'&&el.matches?.('.btn,.icon-button,.month-picker,.choice-trigger,#mobile-nav button,.glass-month-cell,.calendar-day,.type-options button');
+  const liquid=theme==='glass'&&el.matches?.('.btn,.icon-button,.month-picker,.choice-trigger,#mobile-nav button,.glass-month-cell,.calendar-day,.type-options button,.g-cta');
   let s=presses.get(el);if(!s){s=O?.motion?.spring({value:1,preset:'snap',onUpdate:v=>{if(!el.isConnected)return;el.style.scale=liquid?`${(1+(1-v)*.55).toFixed(4)} ${(v-(1-v)*1.6).toFixed(4)}`:String(v);}});if(!s)return;presses.set(el,s);}
   s.to(target).then(done=>{if(done&&target===1&&s.target===1){s.stop();el.style.removeProperty('scale');presses.delete(el);}});
 }
