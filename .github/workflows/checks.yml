@@ -28,3 +28,9 @@ jobs:
           java-version: '21'
       - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
       - run: bash gradlew :app:assembleDebug :app:lintDebug --no-daemon
+      # Debug build only, for trying a branch on a phone. Not a release: no signing keys are used.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yubai-debug-apk-${{ github.sha }}
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
