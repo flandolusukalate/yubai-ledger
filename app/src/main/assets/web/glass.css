@@ -233,3 +233,42 @@
 @media (prefers-reduced-motion:reduce){.g-film-strip i{animation:none}}
 @media (prefers-reduced-transparency:reduce){[data-appearance=glass] .g-cta{background:#9c2a1c}[data-appearance=glass][data-theme=stage] .g-cta{background:#b23a28}}
 [data-appearance=glass] .category-icon{border-radius:50%;border-color:var(--g-rim)}
+
+/* ---------- 交互：一键补用途 · 可滑胶片 · 金额键盘 · 撤销 ---------- */
+.g-quick{margin-top:22px;padding:16px 16px 12px;border-radius:24px;border:1px solid var(--g-rim);background:var(--g-bg);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:var(--g-hi),var(--g-edge),var(--g-drop)}
+.g-quick.is-new{transform-origin:50% 0;animation:glass-unfold 560ms cubic-bezier(.34,1.56,.64,1) both}
+.g-quick-q{font:500 17px/1.5 var(--g-serif);margin:8px 0 12px;color:var(--ov-text)}
+.g-quick-q b{font:400 26px/1 var(--font-display);margin:0 3px}
+.g-quick-opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+[data-appearance=glass] .g-chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 15px;border-radius:22px;border:1px solid var(--g-rim);background:var(--g-tint-strong);color:var(--ov-text);box-shadow:var(--g-hi),var(--g-edge);font-size:14px}
+[data-appearance=glass] .g-chip.is-more{color:var(--g-label);background:none;box-shadow:none}
+.g-chip .icon svg{width:17px;height:17px}
+.g-quick>.g-k{display:block;font-size:11px}
+.g-film{position:relative}
+.g-film-strip{cursor:pointer;outline-offset:6px}
+.g-film-strip i{transition:scale 260ms cubic-bezier(.34,1.56,.64,1),filter 160ms}
+.g-film-strip i.is-lit{scale:1 1.14;filter:brightness(1.4)}
+.g-film-strip i.future.is-lit{box-shadow:inset 0 0 0 1px var(--g-label)}
+.g-film-lens{position:absolute;left:0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:96px;padding:8px 14px;border-radius:18px;border:1px solid var(--g-lens-rim);background:var(--g-strong);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);box-shadow:var(--g-hi),var(--g-lens-glow),var(--g-drop);pointer-events:none;white-space:nowrap;transition:transform 150ms cubic-bezier(.16,1,.3,1)}
+.g-film-lens[hidden]{display:none}
+.g-film-lens .d{font-size:11px;letter-spacing:.14em;color:var(--ov-muted)}
+.g-film-lens .v{font:18px/1.25 var(--font-display);color:var(--ov-text)}
+.g-film-lens .n{font-size:11px;color:var(--g-label)}
+.g-film-lens.is-over .n{color:var(--g-over)}
+.g-money.is-rolling{font-variant-numeric:lining-nums tabular-nums}
+.g-day-total{padding:0 0 10px}
+.g-day-total .g-money{font-size:64px;margin-top:6px}
+.g-amount-preview{min-height:22px;margin-top:2px;font:16px/1.4 var(--font-display);color:var(--g-label);letter-spacing:.04em}
+.g-keypad{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 6px;transform-origin:50% 0;animation:glass-unfold 480ms cubic-bezier(.34,1.56,.64,1) both}
+.g-keypad[hidden]{display:none}
+[data-appearance=glass] .g-keypad button{min-height:54px;border-radius:20px;border:1px solid var(--g-rim);background:var(--g-tint-strong);box-shadow:var(--g-hi),var(--g-edge);font:400 25px/1 var(--font-display);color:var(--ov-text)}
+[data-appearance=glass] .g-keypad .is-op,[data-appearance=glass] .g-keypad .is-fn{font:400 21px/1 var(--font-sans);color:var(--g-label);background:var(--g-tint)}
+[data-appearance=glass] .g-keypad .is-done{background:var(--g-primary);border-color:rgb(255 214 190 / .4);color:#fff7ee;font:500 15px/1 var(--g-serif);letter-spacing:.18em;box-shadow:inset 0 1px 0 rgb(255 236 224 / .55),0 6px 16px rgb(60 10 0 / .22)}
+.g-merchants{grid-column:1/-1;display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;margin-top:-6px;scrollbar-width:none}
+.g-merchants::-webkit-scrollbar{display:none}
+.g-merchants[hidden]{display:none}
+[data-appearance=glass] .g-merchant{flex:none;min-height:40px;padding:0 15px;border-radius:20px;border:1px solid var(--g-rim);background:var(--g-tint);color:var(--ov-text);font-size:13px;white-space:nowrap;box-shadow:var(--g-hi)}
+#toast.has-action{pointer-events:auto;display:flex;align-items:center;gap:16px;white-space:nowrap;max-width:calc(100vw - 32px)}
+.toast-action{flex:none;border:0;background:none;min-height:40px;padding:0 4px;color:inherit;font-weight:600;letter-spacing:.1em;text-decoration:underline;text-underline-offset:4px}
+[data-appearance=glass] .toast-action{color:var(--g-label);text-decoration:none}
+@media (prefers-reduced-motion:reduce){.g-quick.is-new,.g-keypad{animation:none}.g-film-lens,.g-film-strip i{transition:none}}

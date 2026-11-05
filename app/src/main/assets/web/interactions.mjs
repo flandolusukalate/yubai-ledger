@@ -138,7 +138,7 @@ export function sheetClosed(){
 }
 function press(el,target,keyboard=false){
   if(!el||el.disabled||el.closest('[aria-disabled="true"]')||(el.dataset.lgDrag&&!keyboard)||reduce())return;
-  const liquid=theme==='glass'&&el.matches?.('.btn,.icon-button,.month-picker,.choice-trigger,#mobile-nav button,.glass-month-cell,.calendar-day,.type-options button,.g-cta');
+  const liquid=theme==='glass'&&el.matches?.('.btn,.icon-button,.month-picker,.choice-trigger,#mobile-nav button,.glass-month-cell,.calendar-day,.type-options button,.g-cta,.g-chip,.g-keypad button,.g-merchant');
   let s=presses.get(el);if(!s){s=O?.motion?.spring({value:1,preset:'snap',onUpdate:v=>{if(!el.isConnected)return;el.style.scale=liquid?`${(1+(1-v)*.55).toFixed(4)} ${(v-(1-v)*1.6).toFixed(4)}`:String(v);}});if(!s)return;presses.set(el,s);}
   s.to(target).then(done=>{if(done&&target===1&&s.target===1){s.stop();el.style.removeProperty('scale');presses.delete(el);}});
 }

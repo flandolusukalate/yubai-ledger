@@ -4,6 +4,8 @@ import {mountTransactionEditor} from './transaction-editor.mjs';
 import {customRulesPanel,mountRuleEditor} from './rule-editor.mjs';
 import {rulesAfterRestore,screenshotPayment} from './rule-model.mjs';
 import {mountGlassMonth} from './glass-month.mjs';
+import {mountFilm,rollMoney} from './glass-home.mjs';
+import {mountKeypad} from './glass-keypad.mjs';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const native=globalThis.Native, storageKey='yubai-ledger-v1';
@@ -42,7 +44,7 @@ function commit(type,value,options,queueIds=[]){
  }
  reloadStored();render();throw new Error('账本刚刚更新，请检查当前记录后重试；本次操作未覆盖新流水');
 }
-function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3500);}
+function toast(message,act=null){const t=$('#toast');t.replaceChildren(document.createTextNode(message));if(act){const b=document.createElement('button');b.type='button';b.className='toast-action';b.textContent=act.label;b.onclick=()=>{clearTimeout(toastTimer);t.classList.remove('show');guarded(act.run);};t.append(b);}t.classList.toggle('has-action',!!act);t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),act?5200:3500);}
 function guarded(fn){try{fn();}catch(e){const err=$('#form-error');if(err)err.textContent=e.message;else toast(e.message);}}
 const actions={};
 function action(name,fn){actions[name]=fn;}
@@ -91,7 +93,7 @@ function home(){
 // 日光 / 夜灯: one hero per screen, a 30-frame month film, and a floating record button.
 const CN_MONTH=['一','二','三','四','五','六','七','八','九','十','十一','十二'];
 const pad2=n=>String(n).padStart(2,'0');
-function money3(n,cls=''){const [i,d]=compact(Math.abs(n)).split('.');return `<span class="g-money ${cls}${i.length>3?' is-long':''}"><small>¥</small>${i}<span class="g-dec">.${d}</span></span>`;}
+function money3(n,cls=''){const [i,d]=compact(Math.abs(n)).split('.');return `<span class="g-money ${cls}${i.length>3?' is-long':''}" data-value="${n}"><small>¥</small><span class="g-int">${i}</span><span class="g-dec">.<span class="g-dec-n">${d}</span></span></span>`;}
 function clock(t){const tz=state.settings.timezone,day=C.dayAt(t.occurredAt,tz);if(day!==today)return `${day.slice(5,7)}.${day.slice(8)}`;try{return new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(t.occurredAt));}catch{return day.slice(5);}}
 function monthFilm(s){
   const days=C.daysInMonth(month),daily=new Set(s.budgets.filter(b=>b.daily).map(b=>b.id)),spent=Array(days).fill(0);
@@ -100,12 +102,36 @@ function monthFilm(s){
   const cur=month===now?Number(today.slice(8)):month<now?days+1:0;
   let over=0;const bars=spent.map((v,i)=>{const d=i+1,h=v?Math.round(Math.min(44,8+v/ref*30)):3;
     if(d>cur)return `<i class="future" style="--n:${i}"></i>`;
-    if(d===cur)return `<i class="today" style="height:${Math.max(8,h)}px;--n:${i}"></i>`;
-    if(v>ref){over++;return `<i class="over" style="height:${h}px;--n:${i}"></i>`;}
-    return `<i style="height:${h}px;--n:${i}"></i>`;}).join('');
+    if(d===cur)return `<i class="today" data-v="${v}" style="height:${Math.max(8,h)}px;--n:${i}"></i>`;
+    if(v>ref){over++;return `<i class="over" data-v="${v}" style="height:${h}px;--n:${i}"></i>`;}
+    return `<i data-v="${v}" style="height:${h}px;--n:${i}"></i>`;}).join('');
+  const focusDay=Math.min(days,Math.max(1,cur));
   const past=Math.min(days,Math.max(0,cur-1)),label=`本月每日日常花费：已过 ${past} 天${over?`，其中 ${over} 天超出平均参考额度`:''}${cur>=1&&cur<=days?`，今天是第 ${cur} 天`:''}`;
-  return `<section class="g-film" aria-label="这个月的每一天"><div class="g-row g-caption"><span>这个月 · 每一天</span><span>${month.slice(5)}.01 — ${month.slice(5)}.${days}</span></div><div class="g-film-strip" role="img" aria-label="${label}" style="--days:${days}">${bars}</div><div class="g-row g-ticks" aria-hidden="true"><span>1</span><span>15</span><span>${days}</span></div></section>`;
+  return `<section class="g-film" aria-label="这个月的每一天"><div class="g-row g-caption"><span>这个月 · 每一天</span><span>${month.slice(5)}.01 — ${month.slice(5)}.${days}</span></div><div class="g-film-strip" role="slider" tabindex="0" aria-label="${label}。左右滑动查看每一天，点按打开当天明细" aria-valuemin="1" aria-valuemax="${days}" aria-valuenow="${focusDay}" data-month="${month}" data-ref="${Math.round(ref)}" data-last="${focusDay}">${bars}</div><div class="g-row g-ticks" aria-hidden="true"><span>1</span><span>15</span><span>${days}</span></div></section>`;
 }
+// Auto-recorded payments that only need a purpose: one tap on the home screen.
+function quickList(){return state.candidates.filter(c=>c.status==='pending'&&c.autoRecorded===true&&!c.suspectedId&&!c.suspectedCandidateId&&Number.isSafeInteger(c.amount)&&c.amount>0&&c.type!=='complex').sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));}
+let lastQuick='';
+function quickCard(){
+  const list=quickList();if(!list.length){lastQuick='';return '';}
+  const c=list[0],cp=state.plans[C.monthOf(state,c)],cats=C.categories(state);
+  const hist=c.merchant?[...state.transactions].reverse().find(t=>t.status==='confirmed'&&t.type==='expense'&&t.merchant===c.merchant)?.splits?.[0]:null;
+  let opts=(cp?.budgets||[]).filter(b=>b.daily).map(b=>({budgetId:b.id,category:hist?.budgetId===b.id?hist.category:cats[b.id]?b.id:'other',name:b.name}));
+  if(hist)opts.sort((a,b)=>(b.budgetId===hist.budgetId)-(a.budgetId===hist.budgetId));
+  const fresh=lastQuick!==c.id;lastQuick=c.id;
+  return `<section class="g-quick${fresh?' is-new':''}" aria-label="待补用途的付款"><div class="g-row"><span class="g-eyebrow">${list.length>1?`待补用途 · 还有 ${list.length-1} 笔`:'待补用途'}</span><span class="g-status">${clock(c)}${c.merchant?' · '+esc(c.merchant):''}</span></div><p class="g-quick-q">这笔 <b>¥${compact(c.amount)}</b> 是？</p><div class="g-quick-opts">${opts.slice(0,4).map(o=>`<button type="button" class="g-chip" data-action="quick-use" data-id="${esc(c.id)}" data-budget="${esc(o.budgetId)}" data-category="${esc(o.category)}">${icon(o.category)}<span>${esc(o.name)}</span></button>`).join('')}<button type="button" class="g-chip is-more" data-action="confirm" data-id="${esc(c.id)}"><span>${opts.length?'其他…':'补用途 →'}</span></button></div><p class="g-k">已按日常消费预扣，补完自动校正，不会重复扣。</p></section>`;
+}
+function daySheet(d){
+  const day=`${month}-${pad2(d)}`,tz=state.settings.timezone,list=transactions().filter(t=>C.dayAt(t.occurredAt,tz)===day);
+  const spent=list.filter(t=>t.status==='confirmed'&&t.type==='expense').reduce((n,t)=>n+t.amount,0);
+  sheet(`${Number(month.slice(5))} 月 ${d} 日`,`<div class="g-day-total"><span class="g-k">这一天的消费</span>${money3(spent)}</div>${list.map(entry).join('')||'<p class="g-quiet">这一天没有记录。</p>'}`);
+}
+function merchantMemory(){
+  const seen=new Map();
+  for(const t of [...state.transactions].sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt))){if(t.status!=='confirmed'||t.type!=='expense'||!t.merchant)continue;const m=seen.get(t.merchant);if(m)m.n++;else seen.set(t.merchant,{name:t.merchant,n:1,category:t.splits?.[0]?.category,budgetId:t.splits?.[0]?.budgetId});}
+  return [...seen.values()].sort((a,b)=>b.n-a.n).slice(0,24);
+}
+let heroMemo={key:'',v:null};
 function homeGlass(){
   const p=state.plans[month],s=C.summary(state,month,today),pending=s.pending.length,goal=p?.goalTarget??p?.savings??0;
   const awaiting=!!p&&p.income>0&&(s.receivedPlan||0)<p.income&&month===today.slice(0,7),owed=awaiting?p.income-(s.receivedPlan||0):0;
@@ -130,10 +156,10 @@ function homeGlass(){
     (awaiting?`<div class="arrival" data-arrival><div><strong>生活费 ${amount(owed)} 还没到账</strong><span class="muted">到账前，先不计算月底结余。</span></div><button class="btn" data-action="plan">标记到账</button></div>`:'')+
     `<section class="g-hero" aria-label="今日额度"><div class="g-row"><span class="g-eyebrow">${eyebrow}</span>${status?`<span class="g-status">${status}</span>`:''}</div>${hero}</section>`+
     `<button type="button" class="g-cta" data-action="new"><span aria-hidden="true">＋</span> 记下这一笔</button>`+
+    quickCard()+
     (p?monthFilm(s):'')+
     (p?`<div class="g-pair"><button type="button" class="g-cell" data-action="jump" data-target="home-budgets"><span class="g-k">日常预算剩余</span><b class="g-v ${s.D<0?'negative':''}">${vSplit(s.D)}</b><span class="g-k">${dailyCount} 项 · 查看 →</span></button>${second}</div>`:'')+
-    (s.pendingPaymentTotal?`<div class="notice" data-payment-hold><strong>待补用途 ${amount(s.pendingPaymentTotal)}</strong><br>${s.heldPayments} 笔付款已自动记下，按日常消费预扣，补充后校正。其中今日付款 ${amount(s.dailyHold)}。<button class="text-btn" data-action="pending">去补用途 ↗</button></div>`:'')+
-    (pending?`<div class="strip"><div><span class="tag warn">${pending} 笔待确认</span> <span class="muted">核对后才会计入收支与预算。</span></div><button class="text-btn" data-action="pending">去核对 ↗</button></div>`:'')+
+    (pending>quickList().length?`<div class="strip"><div><span class="tag warn">${pending-quickList().length} 笔待确认</span> <span class="muted">核对后才会计入收支与预算。</span></div><button class="text-btn" data-action="pending">去核对 ↗</button></div>`:'')+
     (p&&C.unassigned(state,month)<0?`<div class="notice">计划资金缺口 ${amount(-C.unassigned(state,month))}。可减少娱乐、延期活动或调整储蓄；必要生活底线不会自动降低。</div>`:'')+
     (state.closures[month]?.needsReview?'<div class="notice">月结后流水有变动，请在统计中重新核对月结。</div>':'')+
     `<section class="g-list" aria-label="最近的日常"><div class="g-row g-caption"><span>最近的日常</span><button type="button" class="text-btn" data-action="nav" data-page="ledger">全部账单 →</button></div>${recent.map(line).join('')||`<p class="g-quiet">还没有记录。从今天的一顿饭、一杯咖啡开始。</p>`}</section>`+
@@ -195,6 +221,8 @@ function render(){
   if($('#auto-record-payments'))$('#auto-record-payments').onchange=e=>guarded(()=>commit('SETTINGS',{autoRecordPayments:e.target.checked}));
   Motion.afterRender({page,month,appearance:appearanceOf(state.settings.theme)});
   document.documentElement.toggleAttribute('data-over',!!$('.g-home.is-over'));
+  const hero=$('.g-hero .g-money[data-value]');if(hero){const v=Number(hero.dataset.value),key=page+month;if(heroMemo.key===key)rollMoney(hero,heroMemo.v,v);heroMemo={key,v};}else heroMemo={key:'',v:null};
+  mountFilm($('.g-film-strip'),{onDay:daySheet});
   const bar=$('#mobile-nav');if(bar?.offsetHeight)document.documentElement.style.setProperty('--nav-h',bar.offsetHeight+'px');
 }
 let transactionEditor=null,ruleEditor=null;
@@ -203,6 +231,7 @@ function sheet(title,body,onSubmit,{kind='default'}={}){
   $('#sheet-content').innerHTML=`<div class="dialog-head"><h2 id="sheet-title">${title}</h2><button type="button" data-action="close-sheet" aria-label="关闭弹窗">×</button></div><form id="form">${body}<div id="form-error" role="alert"></div></form>`;
   $('#form').onsubmit=e=>{e.preventDefault();guarded(()=>onSubmit?.(Object.fromEntries(new FormData(e.target)),e.target));};
   if(kind==='transaction')transactionEditor=mountTransactionEditor($('#form'),{icon,createCategory:name=>{const id='cat-'+C.uid();commit('CATEGORY',{id,name});return state.categories.find(c=>c.id===id);}});
+  if(kind==='transaction'&&appearanceOf(state.settings.theme)==='glass')mountKeypad($('#form'),{merchants:merchantMemory()});
   Motion.openSheet();
   if(!$('#sheet').open)$('#sheet').showModal();
   native?.backEnabled?.(true);
@@ -248,8 +277,12 @@ function txSheet({type='expense',tx=null,candidate=null,budgetId=null,distinctPa
    const transaction={...(tx||{}),type:f.type,amount:a,merchant:f.merchant,accountId:f.accountId,toAccountId:f.type==='transfer'?f.toAccountId:null,occurredAt,splits:f.type==='expense'?splits:[],refundOf:f.type==='refund'?f.refundOf:null,incomePlan:f.type==='income'&&f.matchPlan?f.date.slice(0,7):null};
    if(f.type==='complex'){if(candidate)commit('UPDATE_PENDING',{id:candidate.id,amount:a,merchant:f.merchant,occurredAt});else commit('INGEST',{id:C.uid(),fingerprint:'manual:'+C.uid(),source:'manual',origin:'manual',reference:'',amount:a,type:'complex',merchant:f.merchant,occurredAt,collectedAt:nowISO(),status:'pending',successful:false,reliable:false,reason:'复杂用途暂存，尚未计入正式收支'});window.closeSheet();toast(recorded?'用途已保存，日常预扣已释放；仍未计入正式收支':'已保存为待确认，不计入正式收支');return;}
    if(tx)transaction.status='confirmed';
+   const fresh=!tx&&!candidate;if(fresh)transaction.id=C.uid();
    if(candidate)commit('CONFIRM',{id:candidate.id,transaction,distinctPayment});else commit('POST',transaction);
-   window.closeSheet();toast(state.closures[f.date.slice(0,7)]?'已保存，请重新核对历史月结':'账单已保存，预算与统计已同步');
+   window.closeSheet();
+   if(state.closures[f.date.slice(0,7)])toast('已保存，请重新核对历史月结');
+   else if(fresh)toast(`已记下 ¥${compact(a)}${f.merchant?' · '+f.merchant:''}`,{label:'撤销',run:()=>{commit('VOID',transaction.id);toast('已撤销这一笔',{label:'恢复',run:()=>{commit('VOID',transaction.id);toast('已恢复这一笔');}});}});
+   else toast('账单已保存，预算与统计已同步');
  },{kind:'transaction'});
  $('#form [name="date"]').onchange=e=>{const p=state.plans[e.target.value.slice(0,7)],budget=$('#form [name="budgetId"]'),previous=budget.value;budget.innerHTML=(p?.budgets||[]).map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');if([...budget.options].some(o=>o.value===previous))budget.value=previous;};
  if(candidate&&!recorded){const verify=$('#form [name="verifyActual"]'),typeInput=$('#form [name="type"]');const update=()=>{verify.required=typeInput.value!=='complex';};typeInput.addEventListener('change',update);update();}
@@ -271,7 +304,12 @@ function previewBackup(text){restorePreview=C.restore(text);if(restorePreview.se
  });}
 function drain(process=true){if(!native)return;try{const known=new Set(state.candidates.map(c=>c.id));collector=JSON.parse(native.status());reloadStored();const queue=JSON.parse(native.queue());if(queue.length)commit('INGEST',queue,undefined,queue.map(c=>c.queueId));else render();if(process)native.processQueue?.();if(state.candidates.some(c=>c.autoRecorded&&!known.has(c.id)))toast('付款已自动记录，今日可用额度已更新；用途可以稍后补充');}catch(e){toast('处理采集队列失败，候选仍保留：'+e.message);}}
 window.nativeEvent=(type,payload)=>guarded(()=>{if(ruleEditor?.event(type,payload))return;if(type==='resume')drain();else if(type==='ledger-updated')drain(false);else if(type==='ocr-start')toast('正在本地识别中文截图…');else if(type==='ocr'){const c=C.parsePayment(payload.text,{source:'ocr'});if(!payload.text.trim())throw new Error('图片中没有识别到文字，请换一张清晰截图');commit('INGEST',c,{auto:false});page='ledger';ledgerTab='pending';render();toast('截图已识别，请核对实际金额与交易状态');}else if(type==='csv')previewCSV(payload.text);else if(type==='backup')previewBackup(payload.text);else if(type==='error')toast(payload.message);else if(type==='saved')toast('文件已保存');});
-action('jump',el=>{const t=document.getElementById(el.dataset.target);t?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});});action('nav',el=>{page=el.dataset.page;render();window.scrollTo(0,0);});action('close-sheet',()=>window.closeSheet());action('new',()=>txSheet());action('income',()=>txSheet({type:'income'}));action('transfer',()=>txSheet({type:'transfer'}));action('plan',planSheet);action('adjust',adjust);action('activity',activitySheet);action('detail',el=>details(el.dataset.id));action('edit-tx',el=>txSheet({tx:state.transactions.find(x=>x.id===el.dataset.id)}));action('void-tx',el=>{commit('VOID',el.dataset.id);window.closeSheet();toast('流水状态已更新，统计同步重算');});action('pending',()=>{page='ledger';ledgerTab='pending';render();});action('tab',el=>{ledgerTab=el.dataset.tab;render();});action('confirm',el=>reviewCandidate(state.candidates.find(x=>x.id===el.dataset.id)));
+action('jump',el=>{const t=document.getElementById(el.dataset.target);t?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});});action('nav',el=>{page=el.dataset.page;render();window.scrollTo(0,0);});action('close-sheet',()=>window.closeSheet());action('new',()=>txSheet());action('income',()=>txSheet({type:'income'}));action('transfer',()=>txSheet({type:'transfer'}));action('plan',planSheet);action('adjust',adjust);action('activity',activitySheet);action('detail',el=>details(el.dataset.id));action('edit-tx',el=>txSheet({tx:state.transactions.find(x=>x.id===el.dataset.id)}));action('void-tx',el=>{const id=el.dataset.id;commit('VOID',id);window.closeSheet();const voided=state.transactions.find(x=>x.id===id)?.status==='void';toast(voided?'已撤销这笔账，统计已重算':'已恢复这笔账，统计已重算',{label:voided?'恢复':'撤销',run:()=>{commit('VOID',id);toast(voided?'已恢复这笔账':'已撤销这笔账');}});});
+action('quick-use',el=>{const c=state.candidates.find(x=>x.id===el.dataset.id);if(!c||c.status!=='pending')return;
+  const accountId=state.accounts.find(a=>a.id===c.accountId)?.id||state.accounts.find(a=>a.id==='cash')?.id||state.accounts[0]?.id;
+  commit('CONFIRM',{id:c.id,distinctPayment:false,transaction:{type:'expense',amount:c.amount,merchant:c.merchant||'',accountId,toAccountId:null,occurredAt:c.occurredAt,splits:[{amount:c.amount,category:el.dataset.category,budgetId:el.dataset.budget}],refundOf:null,incomePlan:null}});
+  const t=state.transactions.find(x=>x.candidateId===c.id&&x.status==='confirmed'),name=el.textContent.trim();
+  toast(`已记为「${name}」 ¥${compact(c.amount)}`,t?{label:'修改',run:()=>txSheet({tx:state.transactions.find(x=>x.id===t.id)})}:null);});action('pending',()=>{page='ledger';ledgerTab='pending';render();});action('tab',el=>{ledgerTab=el.dataset.tab;render();});action('confirm',el=>reviewCandidate(state.candidates.find(x=>x.id===el.dataset.id)));
 action('merge',el=>{sheet('确认是同一笔交易',`<p class="muted">只有确认这条候选与下方已记流水是同一次资金变动，才应关联。相同金额也可能是不同交易。</p>${entry(state.transactions.find(x=>x.id===el.dataset.tx))}${submit('关联，不新增收支')}`,()=>{commit('MERGE',{id:el.dataset.id,transactionId:el.dataset.tx});window.closeSheet();});});
 action('dismiss',el=>{commit('DISMISS',el.dataset.id);toast('已忽略，不产生收支');});action('activity-spend',el=>txSheet({budgetId:el.dataset.budget}));action('cancel-activity',el=>{sheet('取消活动',`<p class="muted">释放未使用预留到待分配资金；已支付消费仍保留，退款到账后另记关联退款。</p>${submit('取消活动并释放剩余')}`,()=>{commit('CANCEL_ACTIVITY',el.dataset.id);window.closeSheet();});});
 action('carry-activity',el=>sheet('保留到下个月',`<p class="muted">将这项活动尚未使用的预留带到目标月，不算收入，也不会再次分给日常预算。先创建目标月计划。</p>${field('目标月份','month','','month','required')}${submit('保留资金')}`,f=>{commit('CARRY_ACTIVITY',{id:el.dataset.id,toMonth:f.month});window.closeSheet();}));
