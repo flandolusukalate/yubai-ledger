@@ -5,7 +5,7 @@
    No WebGL sampling here: the Lens system samples a fixed paper texture. */
 
 /* Legibility floor for every theme: several labels were 8–10px. Loaded last on purpose. */
-.micro{font-size:11px}.wordmark small,.brand .micro,.topbar .micro{font-size:10px}.hero-main:before{font-size:11px}.savings-card:after{font-size:10px}#mobile-nav button{font-size:12px}
+.micro{font-size:11px}.wordmark small,.brand .micro,.topbar .micro{font-size:10px}.hero-main:before{font-size:11px}.savings-card:after{font-size:10px}#mobile-nav button{font-size:12px;white-space:nowrap;min-width:0;padding-inline:0;letter-spacing:0;word-break:keep-all}
 
 /* ---------- tokens: 日光 (default) ---------- */
 [data-appearance=glass]{
