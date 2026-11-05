@@ -1,0 +1,147 @@
+/* 液态玻璃 · 日光 / 夜灯
+   Two tones of one system. 日光 = Overture "paper" tokens, 夜灯 = Overture "stage" tokens.
+   Content stays square and editorial; anything that floats above it (nav, month pill, buttons,
+   sheets, pickers, toast) is a glass capsule. Pickers unfold out of the control that opened them.
+   No WebGL sampling here: the Lens system samples a fixed paper texture. */
+
+/* Legibility floor for every theme: several labels were 8–10px. Loaded last on purpose. */
+.micro{font-size:11px}.wordmark small,.brand .micro,.topbar .micro{font-size:10px}.hero-main:before{font-size:11px}.savings-card:after{font-size:10px}#mobile-nav button{font-size:12px}
+
+/* ---------- tokens: 日光 (default) ---------- */
+[data-appearance=glass]{
+  --g-label:#7d5210;
+  --g-active:var(--red);
+  --g-bg:rgb(255 253 248 / .55);
+  --g-strong:rgb(250 246 238 / .84);
+  --g-rim:rgb(255 255 255 / .78);
+  --g-edge:0 0 0 .5px rgb(110 85 60 / .22);
+  --g-hi:inset 0 1px 0 rgb(255 255 255 / .95);
+  --g-depth:inset 0 -1px 0 rgb(110 80 50 / .1);
+  --g-drop:0 12px 30px rgb(80 50 20 / .16);
+  --g-lens:rgb(255 255 255 / .72);
+  --g-lens-rim:rgb(255 255 255 / .95);
+  --g-lens-glow:inset 0 0 12px rgb(242 179 91 / .22);
+  --g-primary:rgb(156 42 28 / .88);
+  --g-tint:rgb(255 255 255 / .35);
+  --g-tint-strong:rgb(255 255 255 / .55);
+  --g-shade:rgb(60 40 20 / .22);
+  --g-blur:blur(20px) saturate(180%);
+  --lg-surface-fallback:var(--g-bg);--lg-surface-solid:#f6f1e8;
+}
+/* ---------- tokens: 夜灯 ---------- */
+[data-appearance=glass][data-theme=stage]{
+  --g-label:#f2b35b;
+  --g-active:#f2b35b;
+  --g-bg:rgb(30 26 23 / .46);
+  --g-strong:rgb(24 20 17 / .76);
+  --g-rim:rgb(255 255 255 / .15);
+  --g-edge:0 0 0 0 transparent;
+  --g-hi:inset 0 1px 0 rgb(255 255 255 / .28);
+  --g-depth:inset 0 -1px 0 rgb(0 0 0 / .35);
+  --g-drop:0 12px 32px rgb(0 0 0 / .55);
+  --g-lens:rgb(255 255 255 / .09);
+  --g-lens-rim:rgb(255 255 255 / .22);
+  --g-lens-glow:inset 0 0 14px rgb(242 179 91 / .16);
+  --g-primary:rgb(200 65 45 / .64);
+  --g-tint:rgb(255 255 255 / .04);
+  --g-tint-strong:rgb(255 255 255 / .08);
+  --g-shade:rgb(0 0 0 / .45);
+  --g-blur:blur(22px) saturate(170%);
+  --lg-surface-solid:#191411;
+}
+
+/* ---------- light on the page ---------- */
+[data-appearance=glass] body{background:radial-gradient(90% 55% at 100% 0%,rgb(255 206 130 / .34),transparent 70%) fixed,var(--ov-bg)}
+[data-appearance=glass][data-theme=stage] body{background:radial-gradient(90% 55% at 100% 0%,rgb(242 179 91 / .14),transparent 70%) fixed,var(--ov-bg)}
+
+/* ---------- content layer ---------- */
+[data-appearance=glass] .eyebrow,[data-appearance=glass] .hero-main:before{color:var(--g-label)}
+[data-appearance=glass] .hero-main:after{opacity:.05}
+[data-appearance=glass] .hero-side,[data-appearance=glass] .savings-card{background:var(--g-tint)}
+[data-appearance=glass] .category-icon{background:var(--g-tint)}
+[data-appearance=glass] .field input,[data-appearance=glass] .field select,[data-appearance=glass] .field textarea,[data-appearance=glass] .search input{background:var(--g-tint);color:var(--ov-text)}
+[data-appearance=glass] .field input:focus,[data-appearance=glass] .field select:focus,[data-appearance=glass] .field textarea:focus,[data-appearance=glass] .search input:focus{background:var(--g-tint-strong)}
+[data-appearance=glass] .category-choice[aria-pressed=true]{background:color-mix(in srgb,var(--g-active) 12%,transparent);border-color:var(--g-active);color:var(--g-active)}
+[data-appearance=glass][data-theme=stage] .switch input:checked{background:rgb(255 102 84 / .2)}
+
+/* ---------- glass layer ---------- */
+[data-appearance=glass] #mobile-nav,[data-appearance=glass] .month-picker,[data-appearance=glass] .btn,[data-appearance=glass] .icon-button,[data-appearance=glass] dialog,[data-appearance=glass] #toast,[data-appearance=glass] .arrival,[data-appearance=glass] .glass-month,[data-appearance=glass] .choice-options,[data-appearance=glass] .transaction-calendar,[data-appearance=glass] .choice-trigger{
+  -webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
+[data-appearance=glass] .month-picker,[data-appearance=glass] .icon-button{border-radius:22px;border-color:var(--g-rim);background:var(--g-bg);box-shadow:var(--g-hi),var(--g-edge)}
+[data-appearance=glass] .month-picker{transition:transform 380ms cubic-bezier(.34,1.56,.64,1),box-shadow 240ms}
+[data-appearance=glass] .month-picker.is-open{transform:scale(.96);box-shadow:var(--g-hi),var(--g-edge),0 0 0 3px color-mix(in srgb,var(--g-active) 22%,transparent)}
+[data-appearance=glass] .btn{border-radius:999px;border-color:var(--g-rim);background:var(--g-bg);box-shadow:var(--g-hi),var(--g-edge)}
+[data-appearance=glass] .btn.primary{background:var(--g-primary);border-color:rgb(255 214 190 / .4);color:#fff7ee;box-shadow:inset 0 1px 0 rgb(255 236 224 / .6),inset 0 -2px 6px rgb(80 10 0 / .35),0 12px 28px rgb(60 10 0 / .3)}
+[data-appearance=glass] .btn.primary:not(:disabled):hover{filter:brightness(1.08)}
+[data-appearance=glass] .btn:not(.primary):not(:disabled):hover,[data-appearance=glass] .icon-button:hover{background:var(--g-tint-strong)}
+
+[data-appearance=glass] #mobile-nav{left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));padding:5px;border:1px solid var(--g-rim);border-radius:32px;background:var(--g-bg);box-shadow:var(--g-hi),var(--g-depth),var(--g-edge),var(--g-drop)}
+[data-appearance=glass] #mobile-nav button{flex:1;min-height:52px;border-radius:26px;font-size:12px}
+[data-appearance=glass] #mobile-nav button.active,[data-appearance=glass] #mobile-nav button.active .icon{color:var(--g-active);background:none}
+[data-appearance=glass] #mobile-nav .nav-marker{z-index:0;box-sizing:border-box;border-radius:26px;background:var(--g-lens);border:1px solid var(--g-lens-rim);box-shadow:inset 0 1px 0 rgb(255 255 255 / .5),var(--g-lens-glow),0 2px 8px rgb(0 0 0 / .08)}
+
+[data-appearance=glass] dialog{border-radius:28px;border-color:var(--g-rim);background:var(--g-strong);box-shadow:var(--g-hi),var(--g-edge),0 -20px 60px var(--g-shade)}
+[data-appearance=glass] dialog::backdrop,[data-appearance=glass] #sheet-shade{background:var(--g-shade)}
+[data-appearance=glass] #toast{color:var(--ov-text);border-radius:22px;border:1px solid var(--g-rim);background:var(--g-strong);box-shadow:var(--g-hi),var(--g-edge),var(--g-drop)}
+[data-appearance=glass] .arrival{border-radius:24px;border-color:rgb(190 130 40 / .4);background:rgb(242 179 91 / .12);box-shadow:var(--g-hi),var(--g-drop)}
+[data-appearance=glass] .arrival .btn{background:#f2b35b;border-color:transparent;color:#1a1410;box-shadow:inset 0 1px 0 rgb(255 248 230 / .8),inset 0 -2px 4px rgb(120 70 0 / .35)}
+
+/* ---------- pickers: same glass, unfold out of their trigger ---------- */
+[data-appearance=glass] .choice-trigger{border-radius:18px;border-color:var(--g-rim);background:var(--g-tint);box-shadow:var(--g-hi),var(--g-edge);transition:transform 380ms cubic-bezier(.34,1.56,.64,1)}
+[data-appearance=glass] .choice-trigger[aria-expanded=true]{transform:scale(.97);border-color:var(--g-active)}
+[data-appearance=glass] .date-field>.choice-trigger{border:0;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+[data-appearance=glass] .choice-options,[data-appearance=glass] .transaction-calendar,[data-appearance=glass] .glass-month{border-radius:22px;border:1px solid var(--g-rim);background:var(--g-strong);box-shadow:var(--g-hi),var(--g-edge),var(--g-drop)}
+[data-appearance=glass] .choice-options:not([hidden]),[data-appearance=glass] .transaction-calendar:not([hidden]),[data-appearance=glass] .glass-month{transform-origin:50% 0;animation:glass-unfold 560ms cubic-bezier(.34,1.56,.64,1) both}
+[data-appearance=glass] .choice-options:not([hidden])>*,[data-appearance=glass] .transaction-calendar:not([hidden])>*{animation:glass-settle 360ms 110ms cubic-bezier(.16,1,.3,1) both}
+[data-appearance=glass] .choice-option{border-radius:14px}
+[data-appearance=glass] .calendar-day{border-radius:50%;aspect-ratio:1;max-width:44px;margin:auto;width:100%}
+[data-appearance=glass] .calendar-day[aria-pressed=true]{background:var(--g-primary);color:#fff7ee;box-shadow:inset 0 1px 0 rgb(255 236 224 / .55),0 4px 12px rgb(60 10 0 / .25)}
+[data-appearance=glass] .calendar-step{border-radius:50%}
+
+.glass-month{position:absolute;right:0;top:calc(100% + 10px);z-index:30;width:min(300px,calc(100vw - 32px));padding:14px;box-sizing:border-box}
+.month-control{position:relative}
+[data-appearance=glass] .glass-month{transform-origin:calc(100% - 60px) 0}
+[data-appearance=glass] .glass-month.is-closing{animation:glass-fold 240ms cubic-bezier(.5,0,.75,0) both}
+.glass-month-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.glass-month-head strong{font:500 15px/1 var(--font-display);letter-spacing:.06em}
+.glass-month-step{min-width:44px;min-height:44px;border:0;border-radius:50%;background:none;font-size:22px;color:inherit}
+.glass-month-step:hover{background:var(--g-tint-strong)}
+.glass-month-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.glass-month-cell{min-height:44px;border:1px solid transparent;border-radius:16px;background:var(--g-tint);color:inherit;font-size:13px;position:relative;animation:glass-settle 360ms cubic-bezier(.16,1,.3,1) both;animation-delay:calc(90ms + var(--i,0) * 18ms)}
+.glass-month-cell:hover{background:var(--g-tint-strong)}
+.glass-month-cell[aria-pressed=true]{background:var(--g-primary);color:#fff7ee;box-shadow:inset 0 1px 0 rgb(255 236 224 / .55),0 6px 16px rgb(60 10 0 / .25)}
+.glass-month-cell[data-today]:after{content:'';position:absolute;left:50%;bottom:6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--g-label)}
+.glass-month-cell[aria-pressed=true][data-today]:after{background:#fff7ee}
+.glass-month-today{display:block;width:100%;min-height:44px;margin-top:8px;border:0;border-radius:16px;background:none;color:var(--g-label);font-size:13px;letter-spacing:.08em}
+.glass-month-today:hover{background:var(--g-tint)}
+
+/* Advanced sections open like a drop spreading out. */
+[data-appearance=glass] .transaction-advanced[open]>.advanced-body,[data-appearance=glass] .category-create[open]>:not(summary){animation:glass-settle 360ms cubic-bezier(.16,1,.3,1) both}
+
+@keyframes glass-unfold{
+  0%{opacity:0;transform:scale(.6,.18);border-radius:40px;filter:blur(6px)}
+  45%{opacity:1;filter:blur(0)}
+  70%{transform:scale(1.015,1.03)}
+  100%{opacity:1;transform:none}
+}
+@keyframes glass-fold{to{opacity:0;transform:scale(.7,.2);border-radius:40px;filter:blur(4px)}}
+@keyframes glass-settle{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+
+/* ---------- theme picker previews ---------- */
+.theme-preview.daylight{border-radius:20px;background:radial-gradient(ellipse at 85% 15%,#ffe2b0,#f3ead9 60%,#eee8dc)}
+.theme-preview.stage{border-radius:20px;background:radial-gradient(ellipse at 85% 15%,#5a3a17,#14100c 62%,#0c0a09);color:#f1ebdf}
+.theme-preview.daylight:after,.theme-preview.stage:after{content:'';position:absolute;width:90px;height:40px;right:17px;bottom:16px;border-radius:20px}
+.theme-preview.daylight:after{border:1px solid #fff;background:#ffffff8c;box-shadow:inset 0 1px 0 #fff,0 0 0 .5px #6e553c38,0 8px 16px #50321429}
+.theme-preview.stage:after{border:1px solid #ffffff2e;background:#ffffff14;box-shadow:inset 0 1px 0 #ffffff55,0 8px 16px #0008}
+
+@media (max-width:760px){[data-appearance=glass] dialog{border-radius:28px 28px 0 0}}
+@media (prefers-reduced-motion:reduce){
+  [data-appearance=glass] .choice-options,[data-appearance=glass] .transaction-calendar,[data-appearance=glass] .glass-month,[data-appearance=glass] .glass-month *,[data-appearance=glass] .choice-options *,[data-appearance=glass] .transaction-calendar *{animation:none!important}
+  [data-appearance=glass] .month-picker,[data-appearance=glass] .choice-trigger{transition:none}
+}
+/* System asks for less transparency: keep the shapes, drop the blur. */
+@media (prefers-reduced-transparency:reduce){
+  [data-appearance=glass] *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  [data-appearance=glass]{--g-bg:#f6f1e8;--g-strong:#f6f1e8;--g-primary:#9c2a1c}
+  [data-appearance=glass][data-theme=stage]{--g-bg:#191411;--g-strong:#191411;--g-primary:#b23a28}
+}

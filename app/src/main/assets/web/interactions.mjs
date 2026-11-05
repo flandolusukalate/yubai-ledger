@@ -49,7 +49,7 @@ function mountThemeGlass(){
 function moveIndicator(container,key){
   const active=container?.querySelector('[aria-current="page"]');if(!active||!active.getBoundingClientRect().width)return;
   let indicator=container.querySelector('.nav-marker');if(!indicator){indicator=document.createElement('i');indicator.className='nav-marker';indicator.setAttribute('aria-hidden','true');container.append(indicator);}
-  const r=active.getBoundingClientRect(),p=container.getBoundingClientRect(),pill=theme==='night'&&key==='mobile',target=pill?[r.left-p.left,r.top-p.top,r.width,r.height]:key==='mobile'?[r.left-p.left+12,0,r.width-24,2]:[0,r.top-p.top,2,r.height];
+  const r=active.getBoundingClientRect(),p=container.getBoundingClientRect(),pill=theme==='glass'&&key==='mobile',target=pill?[r.left-p.left,r.top-p.top,r.width,r.height]:key==='mobile'?[r.left-p.left+12,0,r.width-24,2]:[0,r.top-p.top,2,r.height];
   let n=navStates.get(key);
   if(!n){n={element:indicator,spring:null};n.spring=O?.motion?.spring({value:target,preset:'snap',onUpdate:v=>{const e=n.element;if(!e?.isConnected)return;e.style.transform=`translate(${v[0]}px,${v[1]}px)`;e.style.width=v[2]+'px';e.style.height=v[3]+'px';}});navStates.set(key,n);}
   n.element=indicator;if(n.spring)n.spring.to(target,{instant:reduce()});else{indicator.style.left=target[0]+'px';indicator.style.top=target[1]+'px';indicator.style.width=target[2]+'px';indicator.style.height=target[3]+'px';}

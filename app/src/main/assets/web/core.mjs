@@ -451,7 +451,7 @@ export function restore(text) {
   if(!s.plans||!s.closures||!s.settings||!Number.isSafeInteger(s.revision))fail('备份结构不完整');
   dayAt(new Date(),s.settings.timezone);
   if(s.categories!==undefined)validateCategories(s.categories);
-  if(!Array.isArray(s.settings.sources)||s.settings.sources.some(x=>!['com.tencent.mm','com.eg.android.AlipayGphone'].includes(x))||typeof s.settings.autoBook!=='boolean'||!['paper','stage','lens'].includes(s.settings.theme))fail('备份采集规则或主题无效');
+  if(!Array.isArray(s.settings.sources)||s.settings.sources.some(x=>!['com.tencent.mm','com.eg.android.AlipayGphone'].includes(x))||typeof s.settings.autoBook!=='boolean'||!['paper','stage','lens','daylight'].includes(s.settings.theme))fail('备份采集规则或主题无效');
   if(s.settings.customRules!==undefined)validateRules(s.settings.customRules);
   if(s.settings.pageCapture!==undefined&&typeof s.settings.pageCapture!=='boolean')fail('备份页面识别开关无效');
   if(s.settings.pageOcr!==undefined&&typeof s.settings.pageOcr!=='boolean')fail('备份窗口 OCR 开关无效');
