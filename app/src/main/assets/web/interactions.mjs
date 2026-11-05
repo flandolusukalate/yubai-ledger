@@ -52,7 +52,13 @@ function moveIndicator(container,key){
   const r=active.getBoundingClientRect(),p=container.getBoundingClientRect(),pill=theme==='glass'&&key==='mobile',target=pill?[r.left-p.left,r.top-p.top,r.width,r.height]:key==='mobile'?[r.left-p.left+12,0,r.width-24,2]:[0,r.top-p.top,2,r.height];
   let n=navStates.get(key);
   if(!n){n={element:indicator,spring:null};n.spring=O?.motion?.spring({value:target,preset:'snap',onUpdate:v=>{const e=n.element;if(!e?.isConnected)return;e.style.transform=`translate(${v[0]}px,${v[1]}px)`;e.style.width=v[2]+'px';e.style.height=v[3]+'px';}});navStates.set(key,n);}
-  n.element=indicator;if(n.spring)n.spring.to(target,{instant:reduce()});else{indicator.style.left=target[0]+'px';indicator.style.top=target[1]+'px';indicator.style.width=target[2]+'px';indicator.style.height=target[3]+'px';}
+  n.element=indicator;
+  if(n.spring&&pill&&n.last&&Math.abs(n.last[0]-target[0])>2&&!reduce()){
+    const a=n.last,left=Math.min(a[0],target[0]),right=Math.max(a[0]+a[2],target[0]+target[2]),mid=[left,target[1]+target[3]*.07,right-left,target[3]*.86],epoch=n.epoch=(n.epoch||0)+1;
+    n.spring.to(mid);setTimeout(()=>{if(n.epoch===epoch)n.spring.to(target);},150);
+  }else if(n.spring)n.spring.to(target,{instant:reduce()});
+  n.last=target;
+  if(!n.spring){indicator.style.left=target[0]+'px';indicator.style.top=target[1]+'px';indicator.style.width=target[2]+'px';indicator.style.height=target[3]+'px';}
 }
 export function afterRender({page,month,appearance}){
   if(theme!==appearance)destroyGlass();theme=appearance;document.documentElement.dataset.appearance=theme;
@@ -61,7 +67,8 @@ export function afterRender({page,month,appearance}){
   mountThemeGlass();
   if(changed&&!reduce()){
     const nodes=[...document.querySelectorAll('.page-heading,.hero,.panel,.summary-grid,.savings-card,.activity,.empty')].filter((e,i,a)=>!a.some(p=>p!==e&&p.contains(e))).slice(0,8);
-    nodes.forEach((el,i)=>O?.motion?.develop(el,{duration:420,delay:i*35,from:'gray'}));
+    if(theme==='glass')nodes.forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(14px) scale(.985)',filter:'blur(6px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:540,delay:i*45,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
+    else nodes.forEach((el,i)=>O?.motion?.develop(el,{duration:420,delay:i*35,from:'gray'}));
     document.querySelectorAll('.bar i').forEach(el=>{
       el.style.transformOrigin='left';el.style.scale='0 1';
       const s=spring({value:0,preset:'settle'},v=>{if(el.isConnected)el.style.scale=`${Math.max(0,v)} 1`;});s?.to(1);
@@ -104,7 +111,8 @@ export function openSheet(){
       [shell,{transform:'scale(1)'},{transform:'scale(.988)'}]
     ]);
     const nodes=dialog.dataset.kind==='transaction'?[content.querySelector('.dialog-head'),content.querySelector('.transaction-amount')]:[content];
-    nodes.filter(Boolean).forEach(el=>O.motion.develop(el,{duration:420,from:'gray'}));
+    if(theme==='glass'){dialog.animate([{filter:'blur(10px)'},{filter:'blur(0)'}],{duration:320,easing:'cubic-bezier(.16,1,.3,1)'});nodes.filter(Boolean).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(10px)',filter:'blur(4px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:460,delay:60+i*40,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));}
+    else nodes.filter(Boolean).forEach(el=>O.motion.develop(el,{duration:420,from:'gray'}));
   });
 }
 export function closeSheet(done){
@@ -130,7 +138,8 @@ export function sheetClosed(){
 }
 function press(el,target,keyboard=false){
   if(!el||el.disabled||el.closest('[aria-disabled="true"]')||(el.dataset.lgDrag&&!keyboard)||reduce())return;
-  let s=presses.get(el);if(!s){s=O?.motion?.spring({value:1,preset:'snap',onUpdate:v=>{if(el.isConnected)el.style.scale=String(v);}});if(!s)return;presses.set(el,s);}
+  const liquid=theme==='glass'&&el.matches?.('.btn,.icon-button,.month-picker,.choice-trigger,#mobile-nav button,.glass-month-cell,.calendar-day,.type-options button');
+  let s=presses.get(el);if(!s){s=O?.motion?.spring({value:1,preset:'snap',onUpdate:v=>{if(!el.isConnected)return;el.style.scale=liquid?`${(1+(1-v)*.55).toFixed(4)} ${(v-(1-v)*1.6).toFixed(4)}`:String(v);}});if(!s)return;presses.set(el,s);}
   s.to(target).then(done=>{if(done&&target===1&&s.target===1){s.stop();el.style.removeProperty('scale');presses.delete(el);}});
 }
 const control=e=>e.target.closest?.('button,.switch,.theme-choice,summary');

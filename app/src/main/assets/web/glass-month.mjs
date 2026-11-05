@@ -23,13 +23,13 @@ export function mountGlassMonth(host,{value,today,onPick}){
   const outside=e=>{if(panel&&!panel.contains(e.target)&&!host.contains(e.target))close();};
   const keys=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close(true);}};
 
-  const paint=()=>{
+  const paint=(dir=0)=>{
     panel.replaceChildren();
     const head=document.createElement('div');head.className='glass-month-head';
     const prev=document.createElement('button'),next=document.createElement('button'),title=document.createElement('strong');
     prev.type=next.type='button';prev.className=next.className='glass-month-step';prev.textContent='‹';next.textContent='›';
     prev.setAttribute('aria-label','上一年');next.setAttribute('aria-label','下一年');title.textContent=`${year} 年`;title.setAttribute('aria-live','polite');
-    prev.onclick=()=>{year--;paint();prev.focus();};next.onclick=()=>{year++;paint();next.focus();};
+    prev.onclick=()=>{year--;paint(-1);panel.querySelector('.glass-month-step').focus();};next.onclick=()=>{year++;paint(1);panel.querySelectorAll('.glass-month-step')[1].focus();};
     head.append(prev,title,next);
     const grid=document.createElement('div');grid.className='glass-month-grid';
     for(let m=1;m<=12;m++){
@@ -42,6 +42,7 @@ export function mountGlassMonth(host,{value,today,onPick}){
     const back=document.createElement('button');back.type='button';back.className='glass-month-today';back.textContent='回到本月';
     back.onclick=()=>{close();const v=today.slice(0,7);if(v!==value)onPick(v);};
     panel.append(head,grid,back);
+    if(dir&&!matchMedia('(prefers-reduced-motion: reduce)').matches){grid.dataset.slide='1';grid.animate([{opacity:0,transform:`translateX(${dir*28}px)`,filter:'blur(3px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:360,easing:'cubic-bezier(.16,1,.3,1)'});}
   };
 
   const open=()=>{

@@ -145,3 +145,21 @@
   [data-appearance=glass]{--g-bg:#f6f1e8;--g-strong:#f6f1e8;--g-primary:#9c2a1c}
   [data-appearance=glass][data-theme=stage]{--g-bg:#191411;--g-strong:#191411;--g-primary:#b23a28}
 }
+
+/* ---------- global liquid motion ---------- */
+/* Toast pops out of a blur with a little overshoot. */
+[data-appearance=glass] #toast{transform:translateX(-50%) translateY(16px) scale(.86);filter:blur(4px);transition:opacity 260ms ease,transform 560ms cubic-bezier(.34,1.56,.64,1),filter 300ms ease}
+[data-appearance=glass] #toast.show{transform:translateX(-50%);filter:none}
+/* Segmented choices (消费 / 收入 …, list options) become a sliding glass pill. */
+[data-appearance=glass] .type-options button,[data-appearance=glass] .choice-option,[data-appearance=glass] .tabs button{border-radius:999px;transition:background 320ms ease,color 320ms ease,box-shadow 320ms ease,border-color 320ms ease}
+[data-appearance=glass] .type-options button[aria-pressed=true],[data-appearance=glass] .choice-option[aria-pressed=true]{background:var(--g-lens);color:var(--g-active);border-color:var(--g-lens-rim);box-shadow:inset 0 1px 0 rgb(255 255 255 / .5),var(--g-lens-glow),0 2px 8px rgb(0 0 0 / .1)}
+[data-appearance=glass] .glass-month-grid[data-slide] .glass-month-cell{animation:none}
+/* Theme switch: the whole page dissolves through a soft blur. */
+::view-transition-old(root){animation:440ms cubic-bezier(.16,1,.3,1) both vt-out}
+::view-transition-new(root){animation:520ms cubic-bezier(.16,1,.3,1) both vt-in}
+@keyframes vt-out{to{opacity:0;filter:blur(10px)}}
+@keyframes vt-in{from{opacity:0;filter:blur(10px)}}
+@media (prefers-reduced-motion:reduce){
+  [data-appearance=glass] #toast{transition:opacity 200ms ease;transform:translateX(-50%);filter:none}
+  ::view-transition-old(root),::view-transition-new(root){animation:none}
+}
